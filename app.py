@@ -1,8 +1,15 @@
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, request
 import pymysql
 import re
+import redis
+from flask_socketio import SocketIO, emit
 
 app = Flask(__name__)
+socketio = SocketIO(app)
+r = redis.Redis(host='localhost', port=6379, db=0)
+
+# 30天缓存时间(秒)
+CACHE_EXPIRE = 2592000
 
 def highlight_grammar(text):
     # 高亮复数形式
@@ -36,7 +43,15 @@ def get_sentences():
 
 @app.route('/')
 def index():
-    return render_template('corpus_visualized.html')
+    # 尝试从Redis加载保存的内容
+    saved_text = r.get('corpus_input') or b''
+    return render_template('corpus_visualized.html', saved_text=saved_text.decode('utf-8'))
+
+@socketio.on('save_input')
+def handle_save_input(json):
+    text = json['text']
+    r.setex('corpus_input', CACHE_EXPIRE, text)
+    emit('saved', {'status': 'success'})
 
 if __name__ == '__main__':
     app.run(port=5057, debug=False, host='0.0.0.0')

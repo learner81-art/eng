@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Corpus Visualized</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;900&display=swap');
         
@@ -129,6 +130,48 @@
     </footer>
     
     <script>
+        // 初始化Socket.IO连接
+        const socket = io();
+        
+        // 从Redis加载保存的内容
+        let savedText = '{{ saved_text|safe }}' || '';
+        
+        // 自动保存函数
+        function setupAutoSave() {
+            const inputs = document.querySelectorAll('.line-input');
+            inputs.forEach(input => {
+                // 恢复保存的内容
+                if (savedText) {
+                    try {
+                        const savedData = JSON.parse(savedText);
+                        if (savedData[input.dataset.index]) {
+                            input.value = savedData[input.dataset.index];
+                        }
+                    } catch(e) {
+                        console.error('解析保存内容失败:', e);
+                    }
+                }
+                
+                // 设置自动保存
+                let saveTimeout;
+                input.addEventListener('input', () => {
+                    clearTimeout(saveTimeout);
+                    saveTimeout = setTimeout(() => {
+                        const allInputs = document.querySelectorAll('.line-input');
+                        const inputsData = {};
+                        allInputs.forEach(inp => {
+                            inputsData[inp.dataset.index] = inp.value;
+                        });
+                        socket.emit('save_input', {text: JSON.stringify(inputsData)});
+                    }, 1000); // 1秒后保存
+                });
+            });
+            
+            socket.on('saved', (data) => {
+                console.log('内容已保存:', data);
+            });
+        }
+
         // 从API加载句子
         async function loadSentences() {
             try {
@@ -158,6 +201,13 @@
                 console.error('加载句子失败:', error);
             }
         }
+
+        // 加载完成后设置自动保存
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSentences().then(() => {
+                setupAutoSave();
+            });
+        });
 
         // 添加交互效果
         document.querySelectorAll('p').forEach(p => {
