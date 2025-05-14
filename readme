@@ -2,3 +2,6 @@ nginx 配置路径：/usr/local/etc/nginx/vhosts
 
 /Users/a/Library/LanchAgents/com.corpus.visualizer.plist
 launchctl unload /Users/a/Library/LaunchAgents/com.corpus.visualizer.plist
+
+
+git add . && git commit -m "Update files" && git push --force origin main
