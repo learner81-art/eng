@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Corpus Visualized</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;900&display=swap');
         
@@ -129,9 +128,28 @@
         Generated from corpus document | Visualized with HTML/CSS
     </footer>
     
+    <!-- 添加Socket.IO客户端库 -->
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
-        // 初始化Socket.IO连接
+        // 初始化WebSocket连接
         const socket = io();
+        
+        // WebSocket事件监听
+        socket.on('connect', () => {
+            console.log('已连接到WebSocket服务器');
+        });
+        
+        socket.on('connection_response', (data) => {
+            console.log('服务器响应:', data);
+        });
+        
+        socket.on('message_response', (data) => {
+            console.log('消息响应:', data);
+        });
+        
+        socket.on('redis_data', (data) => {
+            console.log('Redis数据:', data);
+        });
         
         // 从Redis加载保存的内容
         let savedText = '{{ saved_text|safe }}' || '';
@@ -162,21 +180,54 @@
                         allInputs.forEach(inp => {
                             inputsData[inp.dataset.index] = inp.value;
                         });
-                        socket.emit('save_input', {text: JSON.stringify(inputsData)});
+                        
+                        // 使用fetch API保存数据
+                        fetch('/api/save_input', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                text: JSON.stringify(inputsData)
+                            })
+                        }).then(response => {
+                            if (!response.ok) {
+                                throw new Error('保存失败');
+                            }
+                            return response.json();
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log('内容已保存:', data);
+                        })
+                        .catch(error => {
+                            console.error('保存失败:', error);
+                        });
                     }, 1000); // 1秒后保存
                 });
             });
-            
-            socket.on('saved', (data) => {
-                console.log('内容已保存:', data);
-            });
         }
 
+        // 测试WebSocket与Redis通信
+        function testWebSocket() {
+            socket.emit('message', {text: '测试消息'});
+            socket.emit('get_redis_data', {key: 'corpus_input'});
+        }
+        
         // 从API加载句子
         async function loadSentences() {
             try {
-                const response = await fetch('http://localhost:5057/api/sentences');
-                const sentences = await response.json();
+                const [sentencesResponse, savedDataResponse] = await Promise.all([
+                    fetch('http://localhost:5057/api/sentences'),
+                    fetch('/api/get_saved_data')
+                ]);
+                
+                if (!sentencesResponse.ok || !savedDataResponse.ok) {
+                    throw new Error('加载数据失败');
+                }
+                
+                const sentences = await sentencesResponse.json();
+                const savedData = await savedDataResponse.json();
                 
                 const container = document.getElementById('sentences-container');
                 
@@ -202,10 +253,12 @@
             }
         }
 
-        // 加载完成后设置自动保存
+        // 加载完成后设置自动保存并测试WebSocket
         document.addEventListener('DOMContentLoaded', () => {
             loadSentences().then(() => {
                 setupAutoSave();
+                // 初始WebSocket测试
+                setTimeout(testWebSocket, 1000);
             });
         });
 

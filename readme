@@ -1,1 +1,4 @@
 nginx 配置路径：/usr/local/etc/nginx/vhosts
+
+/Users/a/Library/LanchAgents/com.corpus.visualizer.plist
+launchctl unload /Users/a/Library/LaunchAgents/com.corpus.visualizer.plist
