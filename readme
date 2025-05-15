@@ -1,6 +1,9 @@
 新增编号
 
 
+git add . && git commit -m "更新代码" && git push origin master || git push --force-with-lease origin master
+
+
 nginx 配置路径：/usr/local/etc/nginx/vhosts
 
 /Users/a/Library/LanchAgents/com.corpus.visualizer.plist
