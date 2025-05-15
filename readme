@@ -1,3 +1,6 @@
+新增编号
+
+
 nginx 配置路径：/usr/local/etc/nginx/vhosts
 
 /Users/a/Library/LanchAgents/com.corpus.visualizer.plist
@@ -5,3 +8,36 @@ launchctl unload /Users/a/Library/LaunchAgents/com.corpus.visualizer.plist
 
 
 git add . && git commit -m "Update files" && git push --force origin main
+
+
+前端代码修复已完成，添加了字体回退和WebSocket连接失败的回退机制
+现在需要检查后端Socket.IO服务和nginx配置
+需要确认app.py是否正在运行并监听5057端口
+需要检查nginx是否正确代理了WebSocket连接
+
+
+
+
+
+从错误日志分析，存在三个关键问题需要解决：
+
+CORS跨域问题
+前端(eng.key.com)尝试访问后端(localhost:5057)被阻止
+需要在后端添加CORS配置允许跨域请求
+WebSocket连接问题
+前端尝试连接http://eng.key.com/socket.io/但返回404
+需要确保Socket.IO服务端配置正确URL
+API端点访问失败
+前端尝试访问http://localhost:5057/api/sentences失败
+需要统一前后端域名或配置代理
+解决方案计划：
+
+修改app.py添加CORS支持
+统一前后端连接URL(建议都使用localhost或都使用eng.key.com)
+配置Nginx反向代理处理跨域请求
+需要切换到行动模式来：
+
+修改后端代码添加CORS支持
+更新前端连接配置
+调整Nginx配置
+请说"切换到行动模式"让我可以实施这些修复。
