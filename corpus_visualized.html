@@ -202,19 +202,19 @@
         
         // 自动保存函数
         function setupAutoSave() {
-            const inputs = document.querySelectorAll('.line-input');
-            inputs.forEach(input => {
+            const textareas = document.querySelectorAll('textarea.line-input');
+            textareas.forEach(textarea => {
                 // 恢复保存的内容
                 if (savedText) {
                     try {
                         const savedData = JSON.parse(savedText);
-                        if (savedData && savedData[input.dataset.index]) {
-                            input.value = savedData[input.dataset.index];
+                        if (savedData && savedData[textarea.dataset.index]) {
+                            textarea.value = savedData[textarea.dataset.index];
                         }
                     } catch(e) {
                         // 不是JSON格式，直接使用原始文本
-                        if (input.dataset.index === "0") {
-                            input.value = savedText;
+                        if (textarea.dataset.index === "0") {
+                            textarea.value = savedText;
                         }
                     }
                 }
@@ -224,14 +224,14 @@
                 const saveHandler = () => {
                     clearTimeout(saveTimeout);
                     saveTimeout = setTimeout(() => {
-                        const allInputs = document.querySelectorAll('.line-input');
-                        const inputsData = {};
-                        allInputs.forEach(inp => {
-                            inputsData[inp.dataset.index] = inp.value;
+                        const allTextareas = document.querySelectorAll('textarea.line-input');
+                        const textareasData = {};
+                        allTextareas.forEach(t => {
+                            textareasData[t.dataset.index] = t.value;
                         });
                         
                         const saveData = {
-                            text: JSON.stringify(inputsData),  // 先字符串化嵌套对象
+                            text: JSON.stringify(textareasData),  // 先字符串化嵌套对象
                             timestamp: new Date().toISOString()
                         };
                         
@@ -254,11 +254,11 @@
                 };
                 
                 // 绑定事件
-                input.addEventListener('input', () => {
+                textarea.addEventListener('input', () => {
                     console.log('检测到输入事件，正在准备保存...');
                     saveHandler();
                 });
-                input.addEventListener('blur', () => {
+                textarea.addEventListener('blur', () => {
                     console.log('输入框失去焦点，触发保存...');
                     saveHandler();
                 });
@@ -274,17 +274,29 @@
         // 从API加载句子
         async function loadSentences() {
             try {
+                console.log('开始从API加载数据...');
                 const [sentencesResponse, savedDataResponse] = await Promise.all([
-                    fetch('/api/sentences'),
-                    fetch('/api/get_saved_data')
+                    fetch('/api/sentences').then(res => {
+                        console.log('句子API响应状态:', res.status);
+                        return res;
+                    }),
+                    fetch('/api/get_saved_data').then(res => {
+                        console.log('保存数据API响应状态:', res.status);
+                        return res;
+                    })
                 ]);
                 
                 if (!sentencesResponse.ok || !savedDataResponse.ok) {
-                    throw new Error('加载数据失败');
+                    const errorMsg = `加载数据失败: 句子API状态=${sentencesResponse.status}, 保存数据API状态=${savedDataResponse.status}`;
+                    console.error(errorMsg);
+                    throw new Error(errorMsg);
                 }
                 
                 const sentences = await sentencesResponse.json();
                 const savedData = await savedDataResponse.json();
+                
+                console.log('从API加载的句子:', sentences);
+                console.log('从API加载的保存数据:', savedData);
                 
                 const container = document.getElementById('sentences-container');
                 
@@ -301,6 +313,29 @@
                     `;
                     container.appendChild(div);
                 });
+                
+                // 应用保存的数据 (Redis索引 = 前端index + 1)
+                if (savedData) {
+                    console.log('原始保存数据:', savedData);
+                    let parsedData = savedData;
+
+                    
+                    // 检查是否是有效的对象
+                    if (parsedData && typeof parsedData === 'object' && !Array.isArray(parsedData)) {
+                        console.log('有效对象数据:', parsedData);
+                        const textareas = document.querySelectorAll('textarea.line-input');
+                        textareas.forEach(textarea => {
+                            const redisIndex = parseInt(textarea.dataset.index) + 1;
+                    
+                            const savedValue = parsedData["data"][redisIndex];
+            
+                            if (savedValue !== undefined && savedValue !== "") {
+                                textarea.value = savedValue;
+                                console.log(`加载保存的值到文本框 ${textarea.dataset.index}:`, savedValue);
+                            } 
+                        });
+                    } 
+                } 
                 
                 // 初始化事件监听器
                 setupAutoSave();
