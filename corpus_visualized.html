@@ -221,35 +221,54 @@
                 
                 // 设置自动保存
                 let saveTimeout;
+                let isSaving = false;
                 const saveHandler = () => {
+                    if (isSaving) return;
+                    
                     clearTimeout(saveTimeout);
-                    saveTimeout = setTimeout(() => {
-                        const allTextareas = document.querySelectorAll('textarea.line-input');
-                        const textareasData = {};
-                        allTextareas.forEach(t => {
-                            textareasData[t.dataset.index] = t.value;
-                        });
-                        
-                        const saveData = {
-                            text: JSON.stringify(textareasData),  // 先字符串化嵌套对象
-                            timestamp: new Date().toISOString()
-                        };
-                        
-                        fetch('/api/save_input', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify(saveData)
-                        }).then(response => {
+                    saveTimeout = setTimeout(async () => {
+                        isSaving = true;
+                        try {
+                            const allTextareas = document.querySelectorAll('textarea.line-input');
+                            const textareasData = {};
+                            
+                            // 确保获取所有文本框数据
+                            allTextareas.forEach(t => {
+                                const index = parseInt(t.dataset.index);
+                                textareasData[index] = t.value;
+                                console.log(`保存数据 index=${index}:`, t.value);
+                            });
+                            
+                            const saveData = {
+                                text: JSON.stringify(textareasData),
+                                timestamp: new Date().toISOString(),
+                                totalItems: allTextareas.length
+                            };
+                            
+                            const response = await fetch('/api/save_input', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify(saveData)
+                            });
+                            
                             if (!response.ok) {
                                 throw new Error(`保存失败: ${response.status}`);
                             }
-                            return response.json();
-                        })
-                        .catch(error => {
+                            
+                            const result = await response.json();
+                            console.log('保存成功:', result);
+                            
+                            // 验证保存的数据完整性
+                            if (result.savedItems !== allTextareas.length) {
+                                console.warn(`数据不完整: 保存了${result.savedItems}条，应有${allTextareas.length}条`);
+                            }
+                        } catch (error) {
                             console.error('保存错误:', error);
-                        });
+                        } finally {
+                            isSaving = false;
+                        }
                     }, 1000);
                 };
                 

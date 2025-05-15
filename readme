@@ -1,5 +1,10 @@
-新增编号
-
+用户反馈Redis保存数据时最后一条丢失的问题
+需要检查corpus_visualized.html中的自动保存逻辑
+可能原因：
+保存事件未正确触发
+索引计算错误
+异步保存未完成
+需要添加更可靠的保存机
 
 git add . && git commit -m "更新代码" && git push origin master || git push --force-with-lease origin master
 git add . && git commit -m "update"
