@@ -236,7 +236,7 @@
                             allTextareas.forEach(t => {
                                 const index = parseInt(t.dataset.index);
                                 textareasData[index] = t.value;
-                                console.log(`保存数据 index=${index}:`, t.value);
+                                // console.log(`保存数据 index=${index}:`, t.value);
                             });
                             
                             const saveData = {
@@ -262,7 +262,7 @@
                             
                             // 验证保存的数据完整性
                             if (result.savedItems !== allTextareas.length) {
-                                console.warn(`数据不完整: 保存了${result.savedItems}条，应有${allTextareas.length}条`);
+                              //  console.warn(`数据不完整: 保存了${result.savedItems}条，应有${allTextareas.length}条`);
                             }
                         } catch (error) {
                             console.error('保存错误:', error);
@@ -350,7 +350,7 @@
             
                             if (savedValue !== undefined && savedValue !== "") {
                                 textarea.value = savedValue;
-                                console.log(`加载保存的值到文本框 ${textarea.dataset.index}:`, savedValue);
+                                // console.log(`加载保存的值到文本框 ${textarea.dataset.index}:`, savedValue);
                             } 
                         });
                     } 

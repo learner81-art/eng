@@ -16,7 +16,7 @@ socketio = SocketIO(app,
 r = redis.Redis(host='localhost', port=6379, db=0)
 
 # 30天缓存时间(秒)
-CACHE_EXPIRE = 2592000
+CACHE_EXPIRE = 86400*30
 
 def highlight_grammar(text):
     # 高亮复数形式
