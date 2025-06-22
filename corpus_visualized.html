@@ -86,6 +86,13 @@
             animation: pulse 2s infinite;
             color: transparent !important;
             text-shadow: none !important;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        
+        .highlight.show-text {
+            color: inherit !important;
+            text-shadow: inherit !important;
         }
         
         .typing-line {
@@ -360,6 +367,7 @@
                 
                 // 初始化事件监听器
                 setupAutoSave();
+                bindHighlightEvents();
             } catch (error) {
                 console.error('加载句子失败:', error);
             }
@@ -406,6 +414,22 @@
                 p.style.transform = 'scale(1)';
             });
         });
+
+        // 添加点击切换显示/隐藏文本功能
+        document.querySelectorAll('.highlight').forEach(highlight => {
+            highlight.addEventListener('click', function() {
+                this.classList.toggle('show-text');
+            });
+        });
+
+        // 动态加载的高亮元素也需要绑定事件
+        function bindHighlightEvents() {
+            document.querySelectorAll('.highlight').forEach(highlight => {
+                highlight.addEventListener('click', function() {
+                    this.classList.toggle('show-text');
+                });
+            });
+        }
 
         // Line-by-line typing functionality
         const paragraphs = Array.from(document.querySelectorAll('.content p'));
