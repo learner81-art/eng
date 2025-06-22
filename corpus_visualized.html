@@ -342,28 +342,26 @@
                     container.appendChild(div);
                 });
                 
-                // 应用保存的数据 (Redis索引 = 前端index + 1)
+                // 应用保存的数据 (使用前端索引，不再+1)
                 if (savedData) {
                     console.log('原始保存数据:', savedData);
                     let parsedData = savedData;
 
-                    
                     // 检查是否是有效的对象
                     if (parsedData && typeof parsedData === 'object' && !Array.isArray(parsedData)) {
                         console.log('有效对象数据:', parsedData);
                         const textareas = document.querySelectorAll('textarea.line-input');
                         textareas.forEach(textarea => {
-                            const redisIndex = parseInt(textarea.dataset.index) + 1;
-                    
-                            const savedValue = parsedData["data"][redisIndex];
+                            const frontendIndex = parseInt(textarea.dataset.index);
+                            const savedValue = parsedData["data"][frontendIndex];
             
                             if (savedValue !== undefined && savedValue !== "") {
                                 textarea.value = savedValue;
-                                // console.log(`加载保存的值到文本框 ${textarea.dataset.index}:`, savedValue);
+                                //console.log(`加载保存的值到文本框 ${frontendIndex}:`, savedValue);
                             } 
                         });
                     } 
-                } 
+                }
                 
                 // 初始化事件监听器
                 setupAutoSave();
