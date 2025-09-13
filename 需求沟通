@@ -1,0 +1,12 @@
+
+这里有个系统，搭建nginx 平台让他正常运作，域名设置为 www.mycorpus.com
+
+
+
+1.保持高亮状态 
+2.默认隐藏高亮状态下的单词
+3.点击后显示，再点击后隐藏，点击事件表达显隐
+
+
+
+新增脚本，过滤句子，参照 /Users/a/Desktop/data/english/filter_words.py， 区别是，比如 A句：this is a cat , B句： this is , 那么就保留A句，如果两句一样，就删掉一句，不要合并，只删掉重复的子集或相同的句子
