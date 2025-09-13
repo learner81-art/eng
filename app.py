@@ -9,11 +9,10 @@ import datetime
 app = Flask(__name__)
 socketio = SocketIO(app, 
                   cors_allowed_origins="*", 
-                  async_mode='eventlet',
                   logger=True,
                   engineio_logger=True,
                   transports=['websocket', 'polling'])
-r = redis.Redis(host='localhost', port=6379, db=0)
+r = redis.Redis(host='192.168.3.242', port=6379, db=0, password='redis123')
 
 # 30天缓存时间(秒)
 CACHE_EXPIRE = 86400*30
@@ -28,7 +27,7 @@ def highlight_grammar(text):
 @app.route('/api/sentences')
 def get_sentences():
     conn = pymysql.connect(
-        host='localhost',
+        host='192.168.3.242',
         port=3306,
         user='root',
         password='root',

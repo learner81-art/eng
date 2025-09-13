@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>英语语料库系统 - www.mycorpus.com</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .file-list {
+            list-style: none;
+            padding: 0;
+        }
+        .file-list li {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .file-list li:last-child {
+            border-bottom: none;
+        }
+        .file-list a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .file-list a:hover {
+            text-decoration: underline;
+        }
+        .status {
+            background-color: #27ae60;
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="status">✅ Nginx服务器运行正常 - www.mycorpus.com</div>
+        
+        <h1>英语语料库系统</h1>
+        
+        <h2>可用文件：</h2>
+        <ul class="file-list">
+            <li><a href="corpus_visualized.html">语料库可视化页面</a></li>
+            <li><a href="corpus_edited.md">编辑后的语料库文档</a></li>
+            <li><a href="corpus_highlighted.md">高亮语料库文档</a></li>
+            <li><a href="process_corpus.py">语料库处理脚本</a></li>
+            <li><a href="filter_words.py">词汇过滤脚本</a></li>
+            <li><a href="filter_sentences.py">句子过滤脚本</a></li>
+            <li><a href="app.py">主应用文件</a></li>
+        </ul>
+        
+        <h2>目录结构：</h2>
+        <ul class="file-list">
+            <li><strong>corpus/</strong> - 原始语料库数据</li>
+            <li><strong>corpus_bak/</strong> - 语料库备份</li>
+            <li><strong>daily_reports/</strong> - 每日报告</li>
+            <li><strong>static/</strong> - 静态资源文件</li>
+            <li><strong>system_automation/</strong> - 系统自动化脚本</li>
+        </ul>
+    </div>
+</body>
+</html>

@@ -5,14 +5,15 @@ import time
 import requests
 
 # Redis连接配置
-REDIS_HOST = 'localhost'
+REDIS_HOST = '192.168.3.242'
 REDIS_PORT = 6379
 REDIS_DB = 0
+REDIS_PASSWORD = 'redis123'
 WS_URL = 'http://localhost:5057/socket.io'
 
 def test_redis_connection():
     try:
-        r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB)
+        r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB, password=REDIS_PASSWORD)
         r.ping()
         print("✅ Redis连接成功")
         return r
