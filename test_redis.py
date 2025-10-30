@@ -5,7 +5,7 @@ import time
 import requests
 
 # Redis连接配置
-REDIS_HOST = '192.168.3.242'
+REDIS_HOST = '127.0.0.1'
 REDIS_PORT = 6379
 REDIS_DB = 0
 REDIS_PASSWORD = 'redis123'

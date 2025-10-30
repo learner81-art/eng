@@ -12,7 +12,7 @@ socketio = SocketIO(app,
                   logger=True,
                   engineio_logger=True,
                   transports=['websocket', 'polling'])
-r = redis.Redis(host='192.168.3.242', port=6379, db=0, password='redis123')
+r = redis.Redis(host='127.0.0.1', port=6379, db=0, password='redis123')
 
 # 30天缓存时间(秒)
 CACHE_EXPIRE = 86400*30
@@ -27,7 +27,7 @@ def highlight_grammar(text):
 @app.route('/api/sentences')
 def get_sentences():
     conn = pymysql.connect(
-        host='192.168.3.242',
+        host='127.0.0.1',
         port=3306,
         user='root',
         password='root',
@@ -47,11 +47,39 @@ def get_sentences():
     finally:
         conn.close()
 
+@app.route('/api/sentences_with_translation')
+def get_sentences_with_translation():
+    conn = pymysql.connect(
+        host='127.0.0.1',
+        port=3306,
+        user='root',
+        password='root',
+        database='corpus_db'
+    )
+    
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT id, sentence, translation FROM corpus_sentences")
+            sentences = []
+            for row in cursor:
+                sentences.append({
+                    'id': row[0],
+                    'sentence': row[1],
+                    'translation': row[2]
+                })
+            return jsonify(sentences)
+    finally:
+        conn.close()
+
 @app.route('/')
 def index():
-    # 尝试从Redis加载保存的内容
-    saved_text = r.get('corpus_input') or b''
-    return render_template('corpus_visualized.html', saved_text=saved_text.decode('utf-8'))
+    # 直接读取并返回HTML文件内容
+    try:
+        with open('corpus_visualized.html', 'r', encoding='utf-8') as f:
+            html_content = f.read()
+        return html_content
+    except FileNotFoundError:
+        return "corpus_visualized.html 文件未找到", 404
 
 @app.route('/api/get_saved_data', methods=['GET'])
 def get_saved_data():
@@ -98,8 +126,20 @@ def save_input():
             data = json.loads(raw_data)
             text = data.get('text', raw_data)
             print(f"[解析后的数据] text字段: {text[:100]}...")  # 限制日志长度
+            
+            # 解析text字段中的JSON数据以获取项目数量
+            try:
+                parsed_text = json.loads(text)
+                if isinstance(parsed_text, dict):
+                    saved_items = len(parsed_text)
+                else:
+                    saved_items = 1
+            except:
+                saved_items = 1
+                
         except json.JSONDecodeError as je:
             text = raw_data
+            saved_items = 1
             print(f"[JSON解析警告] 使用原始文本: {je}")
         
         # 保存文本内容到Redis
@@ -108,7 +148,10 @@ def save_input():
         
         # 记录成功
         print(f"[保存成功] {datetime.datetime.now().isoformat()}")
-        return jsonify({'status': 'success'})
+        return jsonify({
+            'status': 'success',
+            'savedItems': saved_items
+        })
         
     except Exception as e:
         print(f"[保存错误] {type(e).__name__}: {str(e)}")
@@ -167,4 +210,4 @@ def handle_get_redis_data(data):
         emit('redis_data', {'key': key, 'value': value.decode() if value else None})
 
 if __name__ == '__main__':
-    socketio.run(app, port=5057, debug=False, host='0.0.0.0')
+    socketio.run(app, port=5057, debug=False, host='0.0.0.0', allow_unsafe_werkzeug=True)

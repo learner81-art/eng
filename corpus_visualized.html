@@ -105,14 +105,81 @@
         
         .line-input {
             width: 100%;
-            padding: 0.8rem;
-            background: rgba(255,255,255,0.9);
+            min-height: 140px; /* 增加高度以更好支持3行 */
+            max-height: 500px;
+            padding: 1.2rem;
+            background: rgba(255,255,255,0.98);
             color: #333;
-            border: 2px solid rgba(255,255,255,0.3);
-            border-radius: 8px;
+            border: 3px solid rgba(255,255,255,0.4);
+            border-radius: 15px;
             font-family: 'Poppins', sans-serif;
-            font-size: 1rem;
-            transition: all 0.3s;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            resize: vertical;
+            line-height: 1.8;
+            overflow-wrap: break-word;
+            white-space: pre-wrap;
+            box-sizing: border-box;
+            overflow-y: auto;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+            cursor: text;
+        }
+        
+        .line-input:focus {
+            min-height: 160px;
+            max-height: 600px;
+            outline: none;
+            border-color: #4ecdc4;
+            box-shadow: 0 0 0 4px rgba(78, 205, 196, 0.3), 0 8px 25px rgba(0,0,0,0.2);
+            transform: translateY(-3px);
+            background: rgba(255,255,255,1);
+        }
+        
+        .line-input:not(:focus) {
+            min-height: 140px;
+        }
+        
+        .line-input:hover {
+            border-color: rgba(255,255,255,0.6);
+            box-shadow: 0 6px 25px rgba(0,0,0,0.2);
+            transform: translateY(-1px);
+        }
+        
+        .line-input::placeholder {
+            color: #999;
+            font-style: italic;
+        }
+        
+        @media (max-width: 768px) {
+            .line-input {
+                min-height: 100px; /* 平板设备上保持3行高度 */
+                max-height: 300px;
+                font-size: 1rem;
+                padding: 1rem;
+                border-radius: 12px;
+                line-height: 1.7;
+            }
+            
+            .line-input:focus {
+                min-height: 120px;
+                max-height: 350px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .line-input {
+                min-height: 90px; /* 手机上保持3行高度 */
+                max-height: 250px;
+                font-size: 1rem;
+                padding: 0.8rem;
+                border-radius: 10px;
+                line-height: 1.6;
+            }
+            
+            .line-input:focus {
+                min-height: 110px;
+                max-height: 300px;
+            }
         }
         
         .line-input:focus {
@@ -211,84 +278,103 @@
         
         // 自动保存函数
         function setupAutoSave() {
-            const textareas = document.querySelectorAll('textarea.line-input');
-            textareas.forEach(textarea => {
-                // 恢复保存的内容
-                if (savedText) {
-                    try {
-                        const savedData = JSON.parse(savedText);
-                        if (savedData && savedData[textarea.dataset.index]) {
-                            textarea.value = savedData[textarea.dataset.index];
-                        }
-                    } catch(e) {
-                        // 不是JSON格式，直接使用原始文本
-                        if (textarea.dataset.index === "0") {
-                            textarea.value = savedText;
-                        }
+            const inputs = document.querySelectorAll('textarea.line-input');
+            
+            // 恢复保存的内容
+            if (savedText) {
+                try {
+                    const savedData = JSON.parse(savedText);
+                    if (savedData && typeof savedData === 'object') {
+                        inputs.forEach(input => {
+                            const index = parseInt(input.dataset.index);
+                            if (savedData[index] !== undefined) {
+                                input.value = savedData[index];
+                            }
+                        });
                     }
+                } catch(e) {
+                    console.log('无法解析保存的数据:', e);
                 }
+            }
+            
+            // 设置自动保存
+            let saveTimeout;
+            let isSaving = false;
+            let currentInputsData = {}; // 保存当前所有输入框的数据
+            
+            // 初始化当前数据
+            inputs.forEach(input => {
+                const index = parseInt(input.dataset.index);
+                currentInputsData[index] = input.value;
+            });
+            
+            const saveHandler = async (changedIndex = null) => {
+                if (isSaving) return;
                 
-                // 设置自动保存
-                let saveTimeout;
-                let isSaving = false;
-                const saveHandler = () => {
-                    if (isSaving) return;
-                    
-                    clearTimeout(saveTimeout);
-                    saveTimeout = setTimeout(async () => {
-                        isSaving = true;
-                        try {
-                            const allTextareas = document.querySelectorAll('textarea.line-input');
-                            const textareasData = {};
-                            
-                            // 确保获取所有文本框数据
-                            allTextareas.forEach(t => {
-                                const index = parseInt(t.dataset.index);
-                                textareasData[index] = t.value;
-                                // console.log(`保存数据 index=${index}:`, t.value);
-                            });
-                            
-                            const saveData = {
-                                text: JSON.stringify(textareasData),
-                                timestamp: new Date().toISOString(),
-                                totalItems: allTextareas.length
-                            };
-                            
-                            const response = await fetch('/api/save_input', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                },
-                                body: JSON.stringify(saveData)
-                            });
-                            
-                            if (!response.ok) {
-                                throw new Error(`保存失败: ${response.status}`);
+                clearTimeout(saveTimeout);
+                saveTimeout = setTimeout(async () => {
+                    isSaving = true;
+                    try {
+                        // 只更新当前修改的输入框数据
+                        if (changedIndex !== null) {
+                            const changedInput = document.querySelector(`textarea.line-input[data-index="${changedIndex}"]`);
+                            if (changedInput) {
+                                currentInputsData[changedIndex] = changedInput.value;
+                                console.log(`更新数据 index=${changedIndex}:`, changedInput.value);
                             }
-                            
-                            const result = await response.json();
-                            console.log('保存成功:', result);
-                            
-                            // 验证保存的数据完整性
-                            if (result.savedItems !== allTextareas.length) {
-                              //  console.warn(`数据不完整: 保存了${result.savedItems}条，应有${allTextareas.length}条`);
-                            }
-                        } catch (error) {
-                            console.error('保存错误:', error);
-                        } finally {
-                            isSaving = false;
+                        } else {
+                            // 如果是blur事件，更新所有输入框数据
+                            const allInputs = document.querySelectorAll('textarea.line-input');
+                            allInputs.forEach(input => {
+                                const index = parseInt(input.dataset.index);
+                                currentInputsData[index] = input.value;
+                            });
                         }
-                    }, 1000);
-                };
-                
-                // 绑定事件
-                textarea.addEventListener('input', () => {
-                    console.log('检测到输入事件，正在准备保存...');
-                    saveHandler();
+                        
+                        const saveData = {
+                            text: JSON.stringify(currentInputsData),
+                            timestamp: new Date().toISOString(),
+                            totalItems: Object.keys(currentInputsData).length
+                        };
+                        
+                        const response = await fetch('/api/save_input', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(saveData)
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error(`保存失败: ${response.status}`);
+                        }
+                        
+                        const result = await response.json();
+                        console.log('保存成功:', result);
+                        
+                        // 验证保存的数据完整性
+                        if (result.savedItems && result.savedItems !== Object.keys(currentInputsData).length) {
+                            console.warn(`数据不完整: 保存了${result.savedItems}条，应有${Object.keys(currentInputsData).length}条`);
+                        }
+                    } catch (error) {
+                        console.error('保存错误:', error);
+                    } finally {
+                        isSaving = false;
+                    }
+                }, 500); // 减少延迟时间
+            };
+            
+            // 绑定事件
+            inputs.forEach(input => {
+                input.addEventListener('input', () => {
+                    const index = parseInt(input.dataset.index);
+                    console.log(`检测到输入事件 index=${index}，正在准备保存...`);
+                    saveHandler(index);
                 });
-                textarea.addEventListener('blur', () => {
+                
+                input.addEventListener('blur', () => {
                     console.log('输入框失去焦点，触发保存...');
-                    saveHandler();
+                    saveHandler(); // blur时保存所有数据
                 });
             });
         }
@@ -299,12 +385,12 @@
             socket.emit('get_redis_data', {key: 'corpus_input'});
         }
         
-        // 从API加载句子
+        // 从API加载句子和翻译
         async function loadSentences() {
             try {
                 console.log('开始从API加载数据...');
                 const [sentencesResponse, savedDataResponse] = await Promise.all([
-                    fetch('/api/sentences').then(res => {
+                    fetch('/api/sentences_with_translation').then(res => {
                         console.log('句子API响应状态:', res.status);
                         return res;
                     }),
@@ -332,14 +418,35 @@
                     const div = document.createElement('div');
                     div.className = 'typing-line';
                     div.innerHTML = `
-                        <p><span class="sentence-number">${index + 1}.</span> ${sentence.sentence}</p>
+                        <p class="sentence-item" data-id="${sentence.id}" data-original="${sentence.sentence}">
+                            <span class="sentence-number">${sentence.id}.</span> 
+                            <span class="translation-text">${sentence.translation || '暂无翻译'}</span>
+                            <span class="original-text" style="display: none;">${sentence.sentence}</span>
+                        </p>
                         <div class="typing-container">
                             <textarea class="line-input" data-index="${index}" 
-                             style="width: 100%; height: 6em; padding: 0.5em; resize: none !important;"></textarea>
+                             placeholder="输入英文单词或句子..." 
+                             rows="3" style="width: 100%; font-size: 1rem;"></textarea>
                             <div class="error-hint"></div>
                         </div>
                     `;
                     container.appendChild(div);
+                });
+                
+                // 绑定点击事件，显示/隐藏英文句子
+                document.querySelectorAll('.sentence-item').forEach(item => {
+                    item.addEventListener('click', function() {
+                        const translationText = this.querySelector('.translation-text');
+                        const originalText = this.querySelector('.original-text');
+                        
+                        if (translationText.style.display !== 'none') {
+                            translationText.style.display = 'none';
+                            originalText.style.display = 'inline';
+                        } else {
+                            translationText.style.display = 'inline';
+                            originalText.style.display = 'none';
+                        }
+                    });
                 });
                 
                 // 应用保存的数据 (使用前端索引，不再+1)
@@ -350,14 +457,13 @@
                     // 检查是否是有效的对象
                     if (parsedData && typeof parsedData === 'object' && !Array.isArray(parsedData)) {
                         console.log('有效对象数据:', parsedData);
-                        const textareas = document.querySelectorAll('textarea.line-input');
-                        textareas.forEach(textarea => {
-                            const frontendIndex = parseInt(textarea.dataset.index);
+                        const inputs = document.querySelectorAll('textarea.line-input');
+                        inputs.forEach(input => {
+                            const frontendIndex = parseInt(input.dataset.index);
                             const savedValue = parsedData["data"][frontendIndex];
             
                             if (savedValue !== undefined && savedValue !== "") {
-                                textarea.value = savedValue;
-                                //console.log(`加载保存的值到文本框 ${frontendIndex}:`, savedValue);
+                                input.value = savedValue;
                             } 
                         });
                     } 

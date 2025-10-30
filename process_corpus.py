@@ -4,7 +4,7 @@ import pymysql
 def process_corpus():
     # 连接到MySQL容器
     conn = pymysql.connect(
-        host='192.168.3.242',
+        host='127.0.0.1',
         port=3306,
         user='root',
         password='root',

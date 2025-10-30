@@ -11,7 +11,7 @@ def test_redis_connection():
     print("🔗 测试远程Redis连接...")
     try:
         r = redis.Redis(
-            host='192.168.3.242',
+            host='127.0.0.1',
             port=6379,
             db=0,
             password='redis123',
@@ -44,7 +44,7 @@ def test_mysql_connection():
     print("\n🔗 测试远程MySQL连接...")
     try:
         conn = pymysql.connect(
-            host='192.168.3.242',
+            host='127.0.0.1',
             port=3306,
             user='root',
             password='root',

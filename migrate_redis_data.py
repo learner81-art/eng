@@ -10,7 +10,7 @@ import argparse
 from tqdm import tqdm
 
 def migrate_redis_data(local_host='localhost', local_port=6379, local_db=0, local_password=None,
-                      remote_host='192.168.3.242', remote_port=6379, remote_db=0, remote_password='redis123'):
+                      remote_host='127.0.0.1', remote_port=6379, remote_db=0, remote_password='redis123'):
     """
     迁移Redis数据从本地到远程
     
